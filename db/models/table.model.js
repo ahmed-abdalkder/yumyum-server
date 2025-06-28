@@ -6,10 +6,7 @@ const tableSchema = new mongoose.Schema(
   {
     number: { type: Number, required: true },
     capacity: { type: Number, required: true },
-    reserved: {
-      type: Boolean,
-      default: false,
-    },
+     
     branchId: {
       type: Types.ObjectId,
       ref: "Branch",

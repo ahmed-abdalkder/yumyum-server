@@ -313,15 +313,11 @@ export const getReservation = asyncHandeler(async (req, res, next) => {
 });
 
 export const getReservations = asyncHandeler(async (req, res, next) => {
-  const reservations = await reservationModel
-    .find({ userId: req.user._id })
-    .populate("tableId")
-    .populate("branchId")
-    .sort({ createdAt: -1 });
-
-  if (!reservations || reservations.length === 0) {
-    return next(new AppError("No reservations found"));
-  }
+ const reservations = await reservationModel
+  .find({ userId: req.user._id })
+  .populate("tableId")
+  .populate("branchId")
+  .sort({ createdAt: -1 });
 
   const updatedReservations = reservations.map((reservation) => {
     const timezone = reservation.timezone || "UTC";
@@ -345,8 +341,8 @@ export const getReservations = asyncHandeler(async (req, res, next) => {
   });
 
   res.status(200).json({
-    message: "All Reservations",
-    reservations: updatedReservations,
+    message: updatedReservations.length > 0 ? "Reservations fetched successfully" : "No reservations found",
+    data: updatedReservations,
   });
 });
 

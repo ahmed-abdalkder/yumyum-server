@@ -164,14 +164,23 @@ export const CancelOrder = asyncHandeler(async (req, res, next) => {
   res.status(200).json({ msg: "Order cancelled successfully" });
 });
 
+
 export const getOrders = asyncHandeler(async (req, res, next) => {
   const orders = await orderModel
     .find({ user: req.user._id })
     .populate({
       path: "foods.foodId",
-      select: "title image variants ",
+      select: "title image variants",
     })
     .sort({ createdAt: -1 });
+
+  if (!orders || orders.length === 0) {
+    return res.status(200).json({
+      message: "No orders found.",
+      count: 0,
+      orders: [],
+    });
+  }
 
   const result = orders.map((order) => {
     const foods = order.foods.map((item) => {
@@ -180,7 +189,7 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
 
       if (item.variantId && food.variants && food.variants.length > 0) {
         variantData = food.variants.find(
-          (v) => v._id.toString() === item.variantId?.toString(),
+          (v) => v._id.toString() === item.variantId?.toString()
         );
       }
 
@@ -194,7 +203,10 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
         price: item.price,
         finalPrice: item.finalPrice,
         variantId: item.variantId,
-        variant: variantData? {label: variantData.label,subprice: variantData.subprice,}: null};
+        variant: variantData
+          ? { label: variantData.label, subprice: variantData.subprice }
+          : null,
+      };
     });
 
     return {
@@ -204,7 +216,7 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
   });
 
   res.status(200).json({
-    message: "Orders",
+    message: "Orders fetched successfully",
     count: result.length,
     orders: result,
   });
