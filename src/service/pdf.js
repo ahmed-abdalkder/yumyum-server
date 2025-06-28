@@ -23,7 +23,7 @@ export async function createInvoice(invoice, filename = "invoice.pdf") {
 
 function generateHeader(doc) {
   doc
-    .image("./public/download.jpeg", 50, 45, { width: 50 })
+    .image("/public/download.jpeg", 50, 45, { width: 50 })
     .fillColor("#444444")
     .fontSize(20)
     .text("YummuyYumm", 110, 57)
