@@ -21,8 +21,7 @@ export async function createInvoice(invoice, filename = "invoice.pdf") {
     writeStream.on("error", (err) => reject(err));
   });
 }
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+ 
 function generateHeader(doc) {
    
   doc
