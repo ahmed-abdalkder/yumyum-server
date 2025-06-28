@@ -343,13 +343,13 @@ export const getReservations = asyncHandeler(async (req, res, next) => {
  if (updatedReservations.length === 0) {
   return res.status(200).json({
     message: "No reservations found",
-    data: [],
+    reservations: [],
   });
 }
 
 res.status(200).json({
   message: "Reservations",
-  data: updatedReservations,
+  reservations: updatedReservations,
 });
 })
 export const reservationStatus = asyncHandeler(async (req, res, next) => {
