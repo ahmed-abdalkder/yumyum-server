@@ -351,7 +351,7 @@ res.status(200).json({
   message: "Reservations",
   data: updatedReservations,
 });
-
+})
 export const reservationStatus = asyncHandeler(async (req, res, next) => {
   const timezone = req.headers["x-timezone"] || "UTC";
 
