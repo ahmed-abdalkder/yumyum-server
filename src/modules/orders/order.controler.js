@@ -65,38 +65,38 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
     { foods: [], totalCartPrice: 0 },
   );
 
-  // const invoice = {
-  //   shipping: {
-  //     name: req.user.name,
-  //     address: order.address,
-  //     city: "Cairo",
-  //     state: "Cairo",
-  //     country: "Egypt",
-  //     postal_code: 94111,
-  //   },
-  //   items: order.foods.map((item) => {
-  //     return {
-  //       title: item.title,
-  //       price: item.price,
-  //       quantity: item.quantity,
-  //       finalprice: item.finalPrice,
-  //     };
-  //   }),
-  //   subtotal: order.subPrice,
-  //   paid: order.totalPrice,
-  //   invoice_nr: order._id,
-  //   Date: order.createdAt,
-  // };
+  const invoice = {
+    shipping: {
+      name: req.user.name,
+      address: order.address,
+      city: "Cairo",
+      state: "Cairo",
+      country: "Egypt",
+      postal_code: 94111,
+    },
+    items: order.foods.map((item) => {
+      return {
+        title: item.title,
+        price: item.price,
+        quantity: item.quantity,
+        finalprice: item.finalPrice,
+      };
+    }),
+    subtotal: order.subPrice,
+    paid: order.totalPrice,
+    invoice_nr: order._id,
+    Date: order.createdAt,
+  };
 
-  // await createInvoice(invoice, "invoice.pdf");
+  await createInvoice(invoice, "invoice.pdf");
 
-  // await sendEmail(req.user.email, "hello", "your order has been succeeded", [
-  //   {
-  //     path: "./public/invoice.pdf",
-  //     contentType: "application/pdf",
-  //   },
+  await sendEmail(req.user.email, "hello", "your order has been succeeded", [
+    {
+      path: "./public/invoice.pdf",
+      contentType: "application/pdf",
+    },
     
-  // ]);
+  ]);
 
   if (paymentmethod == "card") {
     const stripe = new Stripe(process.env.stripe_secret);
