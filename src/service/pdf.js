@@ -1,8 +1,7 @@
 "use strict";
 import fs from "fs";
 import PDFDocument from "pdfkit";
-import path from "path";
-import { fileURLToPath } from "url";
+ 
 
 export async function createInvoice(invoice, filename = "invoice.pdf") {
   return new Promise((resolve, reject) => {
@@ -22,12 +21,10 @@ export async function createInvoice(invoice, filename = "invoice.pdf") {
     writeStream.on("error", (err) => reject(err));
   });
 }
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+ 
 function generateHeader(doc) {
-  const imagePath = path.resolve(__dirname, "../public/download.jpeg");
+  
   doc
-    .image(imagePath, 50, 45, { width: 50 })
     .fillColor("#444444")
     .fontSize(20)
     .text("YummuyYumm", 110, 57)
