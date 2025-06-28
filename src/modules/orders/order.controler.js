@@ -10,7 +10,6 @@ import { asyncHandeler } from "../../utils/asyncHandeler.js";
 import { AppError } from "../../utils/classAppError.js";
 import path from "path";
 import { fileURLToPath } from "url";
-
 export const createOrder = asyncHandeler(async (req, res, next) => {
   const { paymentmethod, phone, address } = req.body;
 
@@ -134,8 +133,8 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
       mode: "payment",
       customer_email: req.user.email,
       metadata: { orderId: order._id.toString() },
-      success_url: `http://localhost:5000/orders/success/${order._id}`,
-      cancel_url: `http://localhost:5000/cancel/${order._id}`,
+      success_url: `https://restaurant-yummy-yum.vercel.app/orders/success/${order._id}`,
+      cancel_url: `https://restaurant-yummy-yum.vercel.app/orders/cancel/${order._id}`,
       line_items: order.foods.map((item) => {
         const name = `${item.foodId.title}${item.variantId?.label ? ` (${item.variantId.label})` : ""}`;
         return {
