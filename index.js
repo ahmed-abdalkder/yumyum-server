@@ -25,7 +25,11 @@ const port = 5000;
 app.post("/orders/webhook", express.raw({ type: "application/json" }), webkook);
 
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: 'https://restaurant-yummy-yum.vercel.app',  
+  credentials: true 
+}));
 app.use(session({ secret: "secret", resave: false, saveUninitialized: true }));
 connectiondb();
 
