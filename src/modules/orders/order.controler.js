@@ -165,7 +165,7 @@ export const CancelOrder = asyncHandeler(async (req, res, next) => {
 });
 
 
-export const getOrders = asyncHandeler(async (req, res, next) => {
+export const getAllOrders = asyncHandeler(async (req, res, next) => {
   const orders = await orderModel
     .find({ user: req.user._id })
     .populate({
@@ -222,50 +222,60 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
   });
 });
 
-export const getOrderById = asyncHandeler(async (req, res, next) => {
-  const { id } = req.params;
-
-  const order = await orderModel
-    .findOne({ _id: id, user: req.user._id })
-    .populate({
+export const getOrders = asyncHandeler(async (req, res, next) => {
+  const orders = await orderModel
+    .find({}).populate({
       path: "foods.foodId",
       select: "title image variants",
     })
     .sort({ createdAt: -1 });
 
-  if (!order) {
-    return next(new AppError("Order not found"));
+  if (!orders || orders.length === 0) {
+    return res.status(200).json({
+      message: "No orders found.",
+      count: 0,
+      orders: [],
+    });
   }
 
-  const foods = order.foods.map((item) => {
-    const food = item.foodId;
-    let variantData = null;
+  const result = orders.map((order) => {
+    const foods = order.foods.map((item) => {
+      const food = item.foodId;
+      let variantData = null;
 
-    if (item.variantId && food.variants && food.variants.length > 0) {
-      variantData = food.variants.find(
-        (v) => v._id.toString() === item.variantId?.toString(),
-      );
-    }
+      if (item.variantId && food.variants && food.variants.length > 0) {
+        variantData = food.variants.find(
+          (v) => v._id.toString() === item.variantId?.toString()
+        );
+      }
+
+      return {
+        foodId: {
+          _id: food._id,
+          title: food.title,
+          image: food.image,
+        },
+        quantity: item.quantity,
+        price: item.price,
+        finalPrice: item.finalPrice,
+        variantId: item.variantId,
+        variant: variantData
+          ? { label: variantData.label, subprice: variantData.subprice }
+          : null,
+      };
+    });
 
     return {
-      foodId: {
-        _id: food._id,
-        title: food.title,
-        image: food.image,
-      },
-      quantity: item.quantity,
-      price: item.price,
-      finalPrice: item.finalPrice,
-      variantId: item.variantId,
-      variant: variantData? {label: variantData.label,subprice: variantData.subprice,}: null};
+      ...order._doc,
+      foods,
+    };
   });
 
-  const result = {
-    ...order._doc,
-    foods,
-  };
-
-  res.status(200).json({ message: "Order", order: result });
+  res.status(200).json({
+    message: "Orders fetched successfully",
+    count: result.length,
+    orders: result,
+  });
 });
 
 export const getStatusOrder = asyncHandeler(async (req, res, next) => {

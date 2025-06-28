@@ -9,10 +9,6 @@ router.get("/confirm/:token", RC.confirm);
 router.get("/getReservations", auth([systemroles.user]), RC.getReservations);
 router.get("/getReservation/:id", auth([systemroles.user]), RC.getReservation);
 router.put("/:id", auth([systemroles.user]), RC.cancelReservation);
-router.put(
-  "/update/:reservationId",
-  auth([systemroles.user]),
-  RC.updateReservation,
-);
-router.patch("/auto-complete", RC.reservationStatus);
+router.put("/update/:reservationId",auth([systemroles.user]),RC.updateReservation,);
+router.get("/status", RC.reservationStatus);
 export default router;
