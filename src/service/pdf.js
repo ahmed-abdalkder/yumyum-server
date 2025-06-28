@@ -21,10 +21,12 @@ export async function createInvoice(invoice, filename = "invoice.pdf") {
     writeStream.on("error", (err) => reject(err));
   });
 }
- 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 function generateHeader(doc) {
-  
+   
   doc
+    .image(imagePath, 50, 45, { width: 50 })
     .fillColor("#444444")
     .fontSize(20)
     .text("YummuyYumm", 110, 57)

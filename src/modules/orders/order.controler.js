@@ -114,8 +114,8 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
       mode: "payment",
       customer_email: req.user.email,
       metadata: { orderId: order._id.toString() },
-      success_url: `${req.protocol}://localhost:5173/orders/success/${order._id}`,
-      cancel_url: `${req.protocol}://localhost:5173/orders/cancel/${order._id}`,
+      success_url: `https://restaurant-yummy-yum.vercel.app/orders/success/${order._id}`,
+      cancel_url: `https://restaurant-yummy-yum.vercel.app/orders/cancel/${order._id}`,
       line_items: order.foods.map((item) => {
         const name = `${item.foodId.title}${item.variantId?.label ? ` (${item.variantId.label})` : ""}`;
         return {
