@@ -8,6 +8,8 @@ import Stripe from "stripe";
 import { payment } from "../../../payment.js";
 import { asyncHandeler } from "../../utils/asyncHandeler.js";
 import { AppError } from "../../utils/classAppError.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 export const createOrder = asyncHandeler(async (req, res, next) => {
   const { paymentmethod, phone, address } = req.body;
@@ -64,7 +66,8 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
     { user: req.user._id },
     { foods: [], totalCartPrice: 0 },
   );
-
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
   // const invoice = {
   //   shipping: {
   //     name: req.user.name,
@@ -97,7 +100,24 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
   //   },
     
   // ]);
+// const invoiceFilename = "invoice.pdf";
+// await createInvoice(invoice, invoiceFilename);
 
+// // المسار الكامل للفايل جوه src/invoices
+// const pdfPath = path.join(__dirname, "../invoices", invoiceFilename);
+
+// // ابعت الفاتورة بالإيميل
+// await sendEmail(
+//   req.user.email,
+//   "Hello",
+//   "Your order has been succeeded",
+//   [
+//     {
+//       path: pdfPath,
+//       contentType: "application/pdf",
+//     },
+//   ]
+// );
   if (paymentmethod == "card") {
     const stripe = new Stripe(process.env.stripe_secret);
 
@@ -114,8 +134,8 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
       mode: "payment",
       customer_email: req.user.email,
       metadata: { orderId: order._id.toString() },
-      success_url: `https://restaurant-yummy-yum.vercel.app/orders/success/${order._id}`,
-      cancel_url: `https://restaurant-yummy-yum.vercel.app/cancel/${order._id}`,
+      success_url: `http://localhost:5000/orders/success/${order._id}`,
+      cancel_url: `http://localhost:5000/cancel/${order._id}`,
       line_items: order.foods.map((item) => {
         const name = `${item.foodId.title}${item.variantId?.label ? ` (${item.variantId.label})` : ""}`;
         return {
