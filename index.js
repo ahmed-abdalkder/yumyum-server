@@ -25,11 +25,7 @@ const port = 5000;
 app.post("/orders/webhook", express.raw({ type: "application/json" }), webkook);
 
 app.use(express.json());
-// app.use(cors());
-app.use(cors({
-  origin: 'https://restaurant-yummy-yum.vercel.app',  
-  credentials: true 
-}));
+app.use(cors());
 app.use(session({ secret: "secret", resave: false, saveUninitialized: true }));
 connectiondb();
 
@@ -46,7 +42,7 @@ app.get(
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
     const { token } = req.user;
-    res.redirect(`https://restaurant-yummy-yum.vercel.app/auth?token=${token}`);
+    res.redirect(`http://localhost:5173/auth?token=${token}`);
   },
 );
 app.use(express.urlencoded({ extended: true }));
