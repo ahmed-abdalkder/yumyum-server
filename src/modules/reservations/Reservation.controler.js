@@ -340,10 +340,16 @@ export const getReservations = asyncHandeler(async (req, res, next) => {
     };
   });
 
-  res.status(200).json({
-    message: updatedReservations.length > 0 ? "Reservations fetched successfully" : "No reservations found",
-    data: updatedReservations,
+ if (updatedReservations.length === 0) {
+  return res.status(200).json({
+    message: "No reservations found",
+    data: [],
   });
+}
+
+res.status(200).json({
+  message: "Reservations",
+  data: updatedReservations,
 });
 
 export const reservationStatus = asyncHandeler(async (req, res, next) => {
