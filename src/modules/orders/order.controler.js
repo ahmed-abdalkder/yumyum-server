@@ -10,6 +10,8 @@ import { asyncHandeler } from "../../utils/asyncHandeler.js";
 import { AppError } from "../../utils/classAppError.js";
 import path from "path";
 import { fileURLToPath } from "url";
+
+
 export const createOrder = asyncHandeler(async (req, res, next) => {
   const { paymentmethod, phone, address } = req.body;
 
@@ -24,23 +26,25 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
 
   for (let item of foods) {
     const food = await foodModel.findById(item.foodId);
-    if (!food) return next(new AppError("Food not found"));
 
-    const variant = food.variants.find(
-      (v) => v._id.toString() === item.variantId?.toString(),
+    // ✨ حتى لو الأكلة اتحذفت من الداتا، نكمل بحفظ snapshot
+    const variant = food?.variants?.find(
+      (v) => v._id.toString() === item.variantId?.toString()
     );
 
-    if (item.variantId && !variant) {
+    if (item.variantId && food && !variant) {
       return next(new AppError("Variant not found"));
     }
 
-    const unitPrice = variant ? variant.subprice : food.price;
+    const unitPrice = variant ? variant.subprice : food?.price || 0;
     const finalPrice = unitPrice * item.quantity;
     subprice += finalPrice;
 
     finalFoods.push({
-      foodId: item.foodId,
-      title: food.title,
+      foodId: food?._id || null,
+      title: food?.title || "Deleted food",
+      image: food?.image || null,
+      foodSnapshot: food || null, // 🔒 snapshot لحفظ حالة الأكلة
       quantity: item.quantity,
       price: unitPrice,
       finalPrice,
