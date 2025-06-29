@@ -165,7 +165,7 @@ export const confirm = asyncHandeler(async (req, res, next) => {
     { status: "active" },
     { new: true },
   );
-  return res.redirect("http://localhost:5173/allReservations");
+  return res.redirect("https://restaurant-yummy-yum.vercel.app/allReservations");
 });
 
 export const cancelReservation = asyncHandeler(async (req, res, next) => {
