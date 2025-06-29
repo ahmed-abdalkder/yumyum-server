@@ -208,7 +208,7 @@ export const getAllOrders = asyncHandeler(async (req, res, next) => {
 
   const result = orders.map((order) => {
     const foods = order.foods.map((item) => {
-      const food = item.foodId;
+      const food = item.foodId || item.foodSnapshot;
       let variantData = null;
 
       if (item.variantId && food.variants && food.variants.length > 0) {
