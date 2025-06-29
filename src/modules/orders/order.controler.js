@@ -11,7 +11,6 @@ import { AppError } from "../../utils/classAppError.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
-
 export const createOrder = asyncHandeler(async (req, res, next) => {
   const { paymentmethod, phone, address } = req.body;
 
@@ -26,25 +25,23 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
 
   for (let item of foods) {
     const food = await foodModel.findById(item.foodId);
+    if (!food) return next(new AppError("Food not found"));
 
-    // ✨ حتى لو الأكلة اتحذفت من الداتا، نكمل بحفظ snapshot
-    const variant = food?.variants?.find(
-      (v) => v._id.toString() === item.variantId?.toString()
+    const variant = food.variants.find(
+      (v) => v._id.toString() === item.variantId?.toString(),
     );
 
-    if (item.variantId && food && !variant) {
+    if (item.variantId && !variant) {
       return next(new AppError("Variant not found"));
     }
 
-    const unitPrice = variant ? variant.subprice : food?.price || 0;
+    const unitPrice = variant ? variant.subprice : food.price;
     const finalPrice = unitPrice * item.quantity;
     subprice += finalPrice;
 
     finalFoods.push({
-      foodId: food?._id || null,
-      title: food?.title || "Deleted food",
-      image: food?.image || null,
-      foodSnapshot: food || null, // 🔒 snapshot لحفظ حالة الأكلة
+      foodId: item.foodId,
+      title: food.title,
       quantity: item.quantity,
       price: unitPrice,
       finalPrice,
@@ -208,68 +205,26 @@ export const getAllOrders = asyncHandeler(async (req, res, next) => {
 
   const result = orders.map((order) => {
     const foods = order.foods.map((item) => {
-      const food = item.foodId || item.foodSnapshot;
-      let variantData = null;
-
-      if (item.variantId && food.variants && food.variants.length > 0) {
-        variantData = food.variants.find(
-          (v) => v._id.toString() === item.variantId?.toString()
-        );
-      }
-
-      return {
-        foodId: {
-          _id: food._id,
-          title: food.title,
-          image: food.image,
-        },
-        quantity: item.quantity,
-        price: item.price,
-        finalPrice: item.finalPrice,
-        variantId: item.variantId,
-        variant: variantData
-          ? { label: variantData.label, subprice: variantData.subprice }
-          : null,
-      };
-    });
-
-    return {
-      ...order._doc,
-      foods,
-    };
-  });
-
-  res.status(200).json({
-    message: "Orders fetched successfully",
-    count: result.length,
-    orders: result,
-  });
-});
-
-export const getOrders = asyncHandeler(async (req, res, next) => {
-  const orders = await orderModel
-    .find({}).populate({
-      path: "foods.foodId",
-      select: "title image variants",
-    })
-    .sort({ createdAt: -1 });
-
-  if (!orders || orders.length === 0) {
-    return res.status(200).json({
-      message: "No orders found.",
-      count: 0,
-      orders: [],
-    });
-  }
-
-  const result = orders.map((order) => {
-    const foods = order.foods.map((item) => {
       const food = item.foodId;
-      let variantData = null;
 
-      if (item.variantId && food.variants && food.variants.length > 0) {
+      if (!food) {
+        
+        return {
+          foodId: null,
+          title: null,
+          image: null,
+          quantity: null,
+          price: null,
+          finalPrice: null,
+          variantId: null,
+          variant: null,
+        };
+      }
+
+      let variantData = null;
+      if (item.variantId && Array.isArray(food.variants)) {
         variantData = food.variants.find(
-          (v) => v._id.toString() === item.variantId?.toString()
+          (v) => v._id?.toString() === item.variantId?.toString()
         );
       }
 
@@ -279,6 +234,8 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
           title: food.title,
           image: food.image,
         },
+        title: food.title,
+        image: food.image,
         quantity: item.quantity,
         price: item.price,
         finalPrice: item.finalPrice,
@@ -302,6 +259,8 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
   });
 });
 
+ 
+ 
 export const getStatusOrder = asyncHandeler(async (req, res, next) => {
   const { id } = req.params;
 
@@ -334,3 +293,79 @@ export const webkook = async (req, res, next) => {
   await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" });
   return res.status(200).json("done");
 };
+
+
+
+
+export const getOrders = asyncHandeler(async (req, res, next) => {
+  const orders = await orderModel
+    .find()
+    .populate({
+      path: "foods.foodId",
+      select: "title image variants",
+    })
+    .sort({ createdAt: -1 });
+
+  if (!orders || orders.length === 0) {
+    return res.status(200).json({
+      message: "No orders found.",
+      count: 0,
+      orders: [],
+    });
+  }
+
+  const result = orders.map((order) => {
+    const foods = order.foods.map((item) => {
+      const food = item.foodId;
+
+      if (!food) {
+         
+        return {
+          foodId: null,
+          title: null,
+          image: null,
+          quantity: null,
+          price: null,
+          finalPrice: null,
+          variantId: null,
+          variant: null,
+        };
+      }
+
+      let variantData = null;
+      if (item.variantId && Array.isArray(food.variants)) {
+        variantData = food.variants.find(
+          (v) => v._id?.toString() === item.variantId?.toString()
+        );
+      }
+
+      return {
+        foodId: {
+          _id: food._id,
+          title: food.title,
+          image: food.image,
+        },
+        title: food.title,
+        image: food.image,
+        quantity: item.quantity,
+        price: item.price,
+        finalPrice: item.finalPrice,
+        variantId: item.variantId,
+        variant: variantData
+          ? { label: variantData.label, subprice: variantData.subprice }
+          : null,
+      };
+    });
+
+    return {
+      ...order._doc,
+      foods,
+    };
+  });
+
+  res.status(200).json({
+    message: "Orders fetched successfully",
+    count: result.length,
+    orders: result,
+  });
+});

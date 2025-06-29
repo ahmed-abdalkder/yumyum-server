@@ -36,11 +36,7 @@ const orderSchema = new mongoose.Schema(
       default: "placed",
       required: true,
     },
-    foodSnapshot: {
-  type: Object,
-  default: null
-},
-
+    
     cancelledBy: { type: Types.ObjectId, ref: "user" },
     reason: { type: String },
   },
