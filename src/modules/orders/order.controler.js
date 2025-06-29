@@ -209,16 +209,16 @@ export const getAllOrders = asyncHandeler(async (req, res, next) => {
 
       if (!food) {
         
-        return {
-          foodId: null,
-          title: null,
-          image: null,
-          quantity: null,
-          price: null,
-          finalPrice: null,
-          variantId: null,
-          variant: null,
-        };
+      return {
+    foodId: null,
+    title: "Deleted food",       
+    image: null,     
+    quantity: item.quantity || 0,    
+    price: 0,                       
+    finalPrice: 0,                  
+    variantId: null,
+    variant: null,
+  };
       }
 
       let variantData = null;
