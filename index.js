@@ -64,6 +64,8 @@ app.use(
         frameAncestors: ["'none'"], 
       },
     },
+     frameguard: { action: 'deny' }, 
+    noSniff: true,
   })
 );
 
