@@ -19,6 +19,8 @@ import passport from "passport";
 import session from "express-session";
 import "./src/middleware/googleAuth.js";
 import { webkook } from "./src/modules/orders/order.controler.js";
+import helmet from 'helmet';
+import { apiLimiter } from "./src/middleware/rateLimiter.js";
 
 const app = express();
 const port = 5000;
@@ -45,6 +47,21 @@ app.get(
     res.redirect(`https://restaurant-yummy-yum.vercel.app/auth?token=${token}`);
   },
 );
+
+
+ 
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+      },
+    },
+  })
+);
+app.use('/api', apiLimiter);
+
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/categories", categoryrouter);
