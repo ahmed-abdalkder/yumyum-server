@@ -51,14 +51,16 @@ app.get(
 
  
 app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https:", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "https:", "'unsafe-inline'"],
-        fontSrc: ["'self'", "https:", "data:"],
-      },
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https:", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "https:", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'none'"], 
     },
   })
 );
