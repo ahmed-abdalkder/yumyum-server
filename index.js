@@ -61,6 +61,7 @@ app.use(
         fontSrc: ["'self'", "https:", "data:"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
+        frameSrc: ["'self'"], 
         frameAncestors: ["'none'"], 
       },
     },
