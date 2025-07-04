@@ -21,6 +21,7 @@ import "./src/middleware/googleAuth.js";
 import { webkook } from "./src/modules/orders/order.controler.js";
 import helmet from 'helmet';
 import { apiLimiter } from "./src/middleware/rateLimiter.js";
+import securityHeaders from "./src/middleware/securityHeaders.js";
 
 const app = express();
 const port = 5000;
@@ -50,27 +51,10 @@ app.get(
 
 
  
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https:", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "https:", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        fontSrc: ["'self'", "https:", "data:"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        frameSrc: ["'self'"], 
-        frameAncestors: ["'none'"], 
-      },
-    },
-     frameguard: { action: 'deny' }, 
-    noSniff: true,
-  })
-);
+ 
 
 app.use('/api', apiLimiter);
+app.use(securityHeaders);
 
 app.use(express.urlencoded({ extended: true }));
 
