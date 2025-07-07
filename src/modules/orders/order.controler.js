@@ -9,7 +9,8 @@ import { payment } from "../../../payment.js";
 import { asyncHandeler } from "../../utils/asyncHandeler.js";
 import { AppError } from "../../utils/classAppError.js";
 import path from "path";
-import { fileURLToPath } from "url";
+ import fs from "fs";
+
 
 export const createOrder = asyncHandeler(async (req, res, next) => {
   const { paymentmethod, phone, address } = req.body;
