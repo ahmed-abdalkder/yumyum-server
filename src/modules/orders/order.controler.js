@@ -162,7 +162,7 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
       discounts: req.body?.coupon ? [{ coupon: req.body.couponId }] : [],
     });
 
-    return res.status(201).json({ msg: "added", url: session.url });
+     res.status(201).json({ msg: "added", url: session.url });
   }
   const invoice = {
   shipping: {
@@ -343,54 +343,8 @@ export const webkook = async (req, res, next) => {
     return res.status(400).json("fail");
   }
 
- const order = await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" },{ new: true });
-  if(order === "placed"){
-    const invoice = {
-  shipping: {
-    name: req.user.name,
-    address: order.address,
-    city: "Cairo",
-    state: "Cairo",
-    country: "Egypt",
-    postal_code: 94111,
-  },
-  items: order.foods.map((item) => ({
-    title: item.title,
-    price: item.price,
-    quantity: item.quantity,
-    finalprice: item.finalPrice,
-  })),
-  subtotal: order.subPrice,
-  paid: order.totalPrice,
-  invoice_nr: order._id,
-  Date: order.createdAt,
-  coupon: order.coupon || 0,  
-};
-
- 
-  const pdfBuffer = await createInvoice(invoice);
-
-  const logoPath = path.join(process.cwd(), "public", "download.jpeg");
-  const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
-
-  const attachments = [
-    {
-      filename: "invoice.pdf",
-      content: pdfBuffer,
-      contentType: "application/pdf",
-    },
-  ];
-
-  if (logoBuffer) {
-    attachments.push({
-      filename: "logo.jpeg",
-      content: logoBuffer,
-      contentType: "image/jpeg",
-    });
-  }
-
-  await sendEmail(req.user.email, "Order Confirmation", "Your order has been succeeded", attachments);
-  }
+  await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" });
+  
   return res.status(200).json("done");
 };
 
