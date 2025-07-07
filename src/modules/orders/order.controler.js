@@ -284,8 +284,62 @@ export const webkook = async (req, res, next) => {
     return res.status(400).json("fail");
   }
 
-  await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" });
+  await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" },{new:true});
   
+  const order = await orderModel.findById(orderId).lean();
+const user = await userModel.findById(order.user).lean();
+
+if (!order || !user) return;
+
+const invoice = {
+  shipping: {
+    name: user.name,
+    address: order.address,
+    city: "Cairo",
+    state: "Cairo",
+    country: "Egypt",
+    postal_code: 94111,
+  },
+  items: order.foods.map((item) => ({
+    title: item.title,
+    price: item.price,
+    quantity: item.quantity,
+    finalprice: item.finalPrice,
+  })),
+  subtotal: order.subPrice,
+  paid: order.totalPrice,
+  invoice_nr: order._id,
+  Date: order.createdAt,
+  coupon: order.coupon || 0,
+};
+
+const pdfBuffer = await createInvoice(invoice);
+const logoPath = path.join(process.cwd(), "public", "download.jpeg");
+const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
+
+const attachments = [
+  {
+    filename: "invoice.pdf",
+    content: pdfBuffer,
+    contentType: "application/pdf",
+  },
+];
+
+if (logoBuffer) {
+  attachments.push({
+    filename: "logo.jpeg",
+    content: logoBuffer,
+    contentType: "image/jpeg",
+  });
+}
+
+await sendEmail(
+  user.email,
+  "Order Confirmation",
+  "Your order has been succeeded",
+  attachments
+);
+
   return res.status(200).json("done");
 };
 
