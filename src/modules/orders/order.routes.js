@@ -11,5 +11,6 @@ router.put("/:id", auth([systemroles.user]), OC.CancelOrder);
 router.get("/AllOrder", auth([systemroles.user ]), OC.getAllOrders);
 router.get("/getOrders" , OC.getOrders);
 router.get("/status/:id", auth([systemroles.user]), OC.getStatusOrder);
+router.post("/send-invoice/:id", auth([systemroles.user]), OC.sendInvoiceAfterPayment);
 
 export default router;
