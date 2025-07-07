@@ -369,7 +369,7 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
 
 // route: POST /api/orders/send-invoice/:id
 
-export const sendInvoiceAfterPayment = asyncHandler(async (req, res, next) => {
+export const sendInvoiceAfterPayment = asyncHandeler(async (req, res, next) => {
   const order = await orderModel.findById(req.params.id).populate("user", "email name");
 
   if (!order) return next(new AppError("Order not found", 404));
