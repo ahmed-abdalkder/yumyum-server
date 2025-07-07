@@ -144,7 +144,7 @@ const invoice = {
   coupon: order.coupon || 0, // تأكد إن في قيمة للكوبون
 };
 
-try {
+ 
   const pdfBuffer = await createInvoice(invoice);
 
   const logoPath = path.join(process.cwd(), "public", "download.jpeg");
@@ -168,11 +168,7 @@ try {
 
   await sendEmail(req.user.email, "Order Confirmation", "Your order has been succeeded", attachments);
 
-  res.status(201).json({ success: true });
-} catch (err) {
-  console.error("❌ Order Error:", err); // ← اطبع الخطأ
-  res.status(500).json({ success: false, message: "Server Error", error: err.message });
-}
+ 
 
 
   if (paymentmethod == "card") {
