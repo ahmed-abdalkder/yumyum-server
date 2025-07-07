@@ -363,7 +363,7 @@ export const webhook = async (req, res, next) => {
     .findOneAndUpdate({ _id: orderId }, { status: "placed" }, { new: true })
     .populate("user", "name email");
 
-  if (!order || !order.user) {
+  if (!order) {
     return res.status(404).json({ message: "Order or user not found" });
   }
 
