@@ -207,11 +207,20 @@ export async function createInvoice(invoice) {
 }
 
 function generateHeader(doc) {
-  const imagePath = path.join(__dirname, "public", "download.jpeg");
-  const imageBuffer = fs.readFileSync(imagePath);
+  const imagePath = path.join(process.cwd(), "public", "download.jpeg");
+
+  try {
+    if (fs.existsSync(imagePath)) {
+      const buffer = fs.readFileSync(imagePath);
+      doc.image(buffer, 50, 45, { width: 50 });
+    } else {
+      console.warn("⚠️ Logo not found, skipping...");
+    }
+  } catch (err) {
+    console.error("❌ Error reading logo image:", err.message);
+  }
 
   doc
-    .image(imageBuffer, 50, 45, { width: 50 }) // استخدم buffer بدلاً من المسار النصي
     .fillColor("#444444")
     .fontSize(20)
     .text("E-commers", 110, 57)
@@ -221,6 +230,7 @@ function generateHeader(doc) {
     .text("cairo, NY, 10025", 200, 80, { align: "right" })
     .moveDown();
 }
+
 
 function generateCustomerInformation(doc, invoice) {
   doc.fillColor("#444444").fontSize(20).text("Invoice", 50, 160);
