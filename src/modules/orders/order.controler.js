@@ -143,30 +143,36 @@ const invoice = {
   coupon: order.coupon || 0, // تأكد إن في قيمة للكوبون
 };
 
-// 1. توليد ملف الـ PDF كـ Buffer
-const pdfBuffer = await createInvoice(invoice);
+try {
+  const pdfBuffer = await createInvoice(invoice);
 
-// 2. قراءة الصورة كـ Buffer
-const logoBuffer = fs.readFileSync(path.join(__dirname, "public", "download.jpeg"));
+  const logoPath = path.join(process.cwd(), "public", "download.jpeg");
+  const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
 
-// 3. إرسال الإيميل بالمرفقات
-await sendEmail(
-  req.user.email,
-  "Order Confirmation",
-  "Your order has been succeeded",
-  [
+  const attachments = [
     {
       filename: "invoice.pdf",
       content: pdfBuffer,
       contentType: "application/pdf",
     },
-    {
+  ];
+
+  if (logoBuffer) {
+    attachments.push({
       filename: "logo.jpeg",
       content: logoBuffer,
       contentType: "image/jpeg",
-    },
-  ]
-);
+    });
+  }
+
+  await sendEmail(req.user.email, "Order Confirmation", "Your order has been succeeded", attachments);
+
+  res.status(201).json({ success: true });
+} catch (err) {
+  console.error("❌ Order Error:", err); // ← اطبع الخطأ
+  res.status(500).json({ success: false, message: "Server Error", error: err.message });
+}
+
 
   if (paymentmethod == "card") {
     const stripe = new Stripe(process.env.stripe_secret);
