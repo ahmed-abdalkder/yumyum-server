@@ -68,65 +68,6 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
     { foods: [], totalCartPrice: 0 },
   );
 
-
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-//   const invoice = {
-//     shipping: {
-//       name: req.user.name,
-//       address: order.address,
-//       city: "Cairo",
-//       state: "Cairo",
-//       country: "Egypt",
-//       postal_code: 94111,
-//     },
-//     items: order.foods.map((item) => {
-//       return {
-//         title: item.title,
-//         price: item.price,
-//         quantity: item.quantity,
-//         finalprice: item.finalPrice,
-//       };
-//     }),
-//     subtotal: order.subPrice,
-//     paid: order.totalPrice,
-//     invoice_nr: order._id,
-//     Date: order.createdAt,
-//   };
-
-//   // await createInvoice(invoice, "invoice.pdf");
-
-//   // await sendEmail(req.user.email, "hello", "your order has been succeeded", [
-//   //   {
-//   //     path: "./public/invoice.pdf",
-//   //     contentType: "application/pdf",
-//   //   },
-    
-//   // ]);
-// const invoiceFilename = "invoice.pdf";
-// await createInvoice(invoice, invoiceFilename);
-
-// // المسار الكامل للفايل جوه src/invoices
-// const pdfPath = path.join(__dirname, "../invoices", invoiceFilename);
-
-// // ابعت الفاتورة بالإيميل
-// await sendEmail(
-//   req.user.email,
-//   "Hello",
-//   "Your order has been succeeded",
-//   [
-//     {
-//       path: pdfPath,
-//       contentType: "application/pdf",
-//     },
-//   ]
-// );
-
-
-
- 
-
-
   if (paymentmethod == "card") {
     const stripe = new Stripe(process.env.stripe_secret);
 
@@ -162,7 +103,7 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
       discounts: req.body?.coupon ? [{ coupon: req.body.couponId }] : [],
     });
 
-     res.status(201).json({ msg: "added", url: session.url });
+    return res.status(201).json({ msg: "added", url: session.url });
   }
   const invoice = {
   shipping: {
@@ -343,8 +284,58 @@ export const webkook = async (req, res, next) => {
     return res.status(400).json("fail");
   }
 
-  await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" });
-  
+  const order = await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" },{ new: true });
+  if (order.status === "placed") {
+    const invoice = {
+      shipping: {
+        name: order.user.name,
+        address: order.address,
+        city: "Cairo",
+        state: "Cairo",
+        country: "Egypt",
+        postal_code: 94111,
+      },
+      items: order.foods.map((item) => ({
+        title: item.title,
+        price: item.price,
+        quantity: item.quantity,
+        finalprice: item.finalPrice,
+      })),
+      subtotal: order.subPrice,
+      paid: order.totalPrice,
+      invoice_nr: order._id,
+      Date: order.createdAt,
+      coupon: order.coupon || 0,
+    };
+
+    const pdfBuffer = await createInvoice(invoice);
+
+    const logoPath = path.join(process.cwd(), "public", "download.jpeg");
+    const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
+
+    const attachments = [
+      {
+        filename: "invoice.pdf",
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ];
+
+    if (logoBuffer) {
+      attachments.push({
+        filename: "logo.jpeg",
+        content: logoBuffer,
+        contentType: "image/jpeg",
+      });
+    }
+
+    await sendEmail(
+      order.user.email,
+      "Order Confirmation",
+      "Your order has been succeeded",
+      attachments
+    );
+  }
   return res.status(200).json("done");
 };
 
