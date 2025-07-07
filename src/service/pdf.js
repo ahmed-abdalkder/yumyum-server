@@ -182,22 +182,27 @@ import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
 
-export async function createInvoice(invoice, filename = "invoice.pdf") {
+export async function createInvoice(invoice) {
   return new Promise((resolve, reject) => {
-    const invoicePath = "./public/" + filename;
-
     const doc = new PDFDocument({ size: "A4", margin: 50 });
-    const writeStream = fs.createWriteStream(invoicePath);
-    doc.pipe(writeStream);
 
-    generateHeader(doc);
-    generateCustomerInformation(doc, invoice);
-    generateInvoiceTable(doc, invoice);
-    generateFooter(doc);
-    doc.end();
+    const buffers = [];
 
-    writeStream.on("finish", () => resolve(invoicePath));
-    writeStream.on("error", (err) => reject(err));
+    doc.on("data", buffers.push.bind(buffers));
+    doc.on("end", () => {
+      const pdfBuffer = Buffer.concat(buffers);
+      resolve(pdfBuffer); // ← نرجع الـ PDF كـ Buffer
+    });
+
+    try {
+      generateHeader(doc);
+      generateCustomerInformation(doc, invoice);
+      generateInvoiceTable(doc, invoice);
+      generateFooter(doc);
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
