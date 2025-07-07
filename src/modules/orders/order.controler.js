@@ -120,6 +120,54 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
 //     },
 //   ]
 // );
+
+const invoice = {
+  shipping: {
+    name: req.user.name,
+    address: order.address,
+    city: "Cairo",
+    state: "Cairo",
+    country: "Egypt",
+    postal_code: 94111,
+  },
+  items: order.foods.map((item) => ({
+    title: item.title,
+    price: item.price,
+    quantity: item.quantity,
+    finalprice: item.finalPrice,
+  })),
+  subtotal: order.subPrice,
+  paid: order.totalPrice,
+  invoice_nr: order._id,
+  Date: order.createdAt,
+  coupon: order.coupon || 0, // تأكد إن في قيمة للكوبون
+};
+
+// 1. توليد ملف الـ PDF كـ Buffer
+const pdfBuffer = await createInvoice(invoice);
+
+// 2. قراءة الصورة كـ Buffer
+const logoBuffer = fs.readFileSync(path.join(__dirname, "public", "download.jpeg"));
+
+// 3. إرسال الإيميل بالمرفقات
+await sendEmail(
+  req.user.email,
+  "Order Confirmation",
+  "Your order has been succeeded",
+  [
+    {
+      filename: "invoice.pdf",
+      content: pdfBuffer,
+      contentType: "application/pdf",
+    },
+    {
+      filename: "logo.jpeg",
+      content: logoBuffer,
+      contentType: "image/jpeg",
+    },
+  ]
+);
+
   if (paymentmethod == "card") {
     const stripe = new Stripe(process.env.stripe_secret);
 
