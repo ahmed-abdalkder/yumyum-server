@@ -343,8 +343,8 @@ export const webkook = async (req, res, next) => {
     return res.status(400).json("fail");
   }
 
- const order = await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" });
-  if(order ){
+ const order = await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" },{ new: true });
+  if(order === "placed"){
     const invoice = {
   shipping: {
     name: req.user.name,
