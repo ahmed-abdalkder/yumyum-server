@@ -122,51 +122,7 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
 //   ]
 // );
 
-const invoice = {
-  shipping: {
-    name: req.user.name,
-    address: order.address,
-    city: "Cairo",
-    state: "Cairo",
-    country: "Egypt",
-    postal_code: 94111,
-  },
-  items: order.foods.map((item) => ({
-    title: item.title,
-    price: item.price,
-    quantity: item.quantity,
-    finalprice: item.finalPrice,
-  })),
-  subtotal: order.subPrice,
-  paid: order.totalPrice,
-  invoice_nr: order._id,
-  Date: order.createdAt,
-  coupon: order.coupon || 0, // تأكد إن في قيمة للكوبون
-};
 
- 
-  const pdfBuffer = await createInvoice(invoice);
-
-  const logoPath = path.join(process.cwd(), "public", "download.jpeg");
-  const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
-
-  const attachments = [
-    {
-      filename: "invoice.pdf",
-      content: pdfBuffer,
-      contentType: "application/pdf",
-    },
-  ];
-
-  if (logoBuffer) {
-    attachments.push({
-      filename: "logo.jpeg",
-      content: logoBuffer,
-      contentType: "image/jpeg",
-    });
-  }
-
-  await sendEmail(req.user.email, "Order Confirmation", "Your order has been succeeded", attachments);
 
  
 
@@ -208,6 +164,52 @@ const invoice = {
 
     return res.status(201).json({ msg: "added", url: session.url });
   }
+  const invoice = {
+  shipping: {
+    name: req.user.name,
+    address: order.address,
+    city: "Cairo",
+    state: "Cairo",
+    country: "Egypt",
+    postal_code: 94111,
+  },
+  items: order.foods.map((item) => ({
+    title: item.title,
+    price: item.price,
+    quantity: item.quantity,
+    finalprice: item.finalPrice,
+  })),
+  subtotal: order.subPrice,
+  paid: order.totalPrice,
+  invoice_nr: order._id,
+  Date: order.createdAt,
+  coupon: order.coupon || 0,  
+};
+
+ 
+  const pdfBuffer = await createInvoice(invoice);
+
+  const logoPath = path.join(process.cwd(), "public", "download.jpeg");
+  const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
+
+  const attachments = [
+    {
+      filename: "invoice.pdf",
+      content: pdfBuffer,
+      contentType: "application/pdf",
+    },
+  ];
+
+  if (logoBuffer) {
+    attachments.push({
+      filename: "logo.jpeg",
+      content: logoBuffer,
+      contentType: "image/jpeg",
+    });
+  }
+
+  await sendEmail(req.user.email, "Order Confirmation", "Your order has been succeeded", attachments);
+ 
   return res.status(201).json({ message: "Order placed", order });
 });
 
