@@ -300,30 +300,21 @@ export const getStatusOrder = asyncHandeler(async (req, res, next) => {
 
 
 export const webhook = async (req, res) => {
-  const stripe = new Stripe(process.env.stripe_secret);
-  const sig = req.headers["stripe-signature"];
+   const stripe = new Stripe(process.env.stripe_secret);
+  const sig = req.headers['stripe-signature'];
+
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.endpointSecret
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.endpointSecret);
   } catch (err) {
-    console.error("❌ Webhook signature error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   const { orderId } = event.data.object.metadata;
 
-  if (!orderId) {
-    console.error("❌ Missing orderId in metadata");
-    return res.status(400).json({ error: "Missing orderId" });
-  }
-
   if (event.type !== "checkout.session.completed") {
-    await orderModel.findByIdAndUpdate(orderId, { status: "rejected" });
+    await orderModel.findOneAndUpdate({ _id: orderId }, { status: "rejected" });
     return res.status(400).json("fail");
   }
 
@@ -337,7 +328,7 @@ export const webhook = async (req, res) => {
   }
 
   if (!order.user || !order.user.email) {
-    console.error("❌ User not populated or missing email:", order.user);
+    console.error("❌ User not populated or missing email:", );
     return res.status(400).json({ error: "User not found or missing email" });
   }
 
