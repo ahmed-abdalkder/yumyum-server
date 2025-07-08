@@ -418,15 +418,15 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
  
 
 export const sendInvoiceAfterPayment = asyncHandeler(async (req, res, next) => {
-
-  const order = await orderModel.findById(req.params.id).populate("user", "email name");
+  const order = await orderModel.findById(req.params.id);
 
   if (!order) return next(new AppError("Order not found", 404));
   if (order.status !== "placed") return next(new AppError("Payment not confirmed", 400));
 
+  // استخدم بيانات المستخدم من التوكن
   const invoice = {
     shipping: {
-      name: order.user.name,
+      name: req.user.name,
       address: order.address,
       city: "Cairo",
       state: "Cairo",
@@ -467,8 +467,9 @@ export const sendInvoiceAfterPayment = asyncHandeler(async (req, res, next) => {
     });
   }
 
+  // إرسال الإيميل
   await sendEmail(
-    order.user.email,
+    req.user.email,
     "Order Confirmation",
     "Your order has been succeeded",
     attachments
