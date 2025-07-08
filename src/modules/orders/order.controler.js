@@ -368,63 +368,63 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
 
  
 
-export const sendInvoiceAfterPayment = asyncHandeler(async (req, res, next) => {
-  const order = await orderModel.findById(req.params.id);
+// export const sendInvoiceAfterPayment = asyncHandeler(async (req, res, next) => {
+//   const order = await orderModel.findById(req.params.id);
 
-  if (!order) return next(new AppError("Order not found", 404));
-  if (order.status !== "placed") return next(new AppError("Payment not confirmed", 400));
+//   if (!order) return next(new AppError("Order not found", 404));
+//   if (order.status !== "placed") return next(new AppError("Payment not confirmed", 400));
 
-  // استخدم بيانات المستخدم من التوكن
-  const invoice = {
-    shipping: {
-      name: req.user.name,
-      address: order.address,
-      city: "Cairo",
-      state: "Cairo",
-      country: "Egypt",
-      postal_code: 94111,
-    },
-    items: order.foods.map((item) => ({
-      title: item.title,
-      price: item.price,
-      quantity: item.quantity,
-      finalprice: item.finalPrice,
-    })),
-    subtotal: order.subPrice,
-    paid: order.totalPrice,
-    invoice_nr: order._id,
-    Date: order.createdAt,
-    coupon: order.coupon || 0,
-  };
+//   // استخدم بيانات المستخدم من التوكن
+//   const invoice = {
+//     shipping: {
+//       name: req.user.name,
+//       address: order.address,
+//       city: "Cairo",
+//       state: "Cairo",
+//       country: "Egypt",
+//       postal_code: 94111,
+//     },
+//     items: order.foods.map((item) => ({
+//       title: item.title,
+//       price: item.price,
+//       quantity: item.quantity,
+//       finalprice: item.finalPrice,
+//     })),
+//     subtotal: order.subPrice,
+//     paid: order.totalPrice,
+//     invoice_nr: order._id,
+//     Date: order.createdAt,
+//     coupon: order.coupon || 0,
+//   };
 
-  const pdfBuffer = await createInvoice(invoice);
+//   const pdfBuffer = await createInvoice(invoice);
 
-  const logoPath = path.join(process.cwd(), "public", "download.jpeg");
-  const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
+//   const logoPath = path.join(process.cwd(), "public", "download.jpeg");
+//   const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
 
-  const attachments = [
-    {
-      filename: "invoice.pdf",
-      content: pdfBuffer,
-      contentType: "application/pdf",
-    },
-  ];
+//   const attachments = [
+//     {
+//       filename: "invoice.pdf",
+//       content: pdfBuffer,
+//       contentType: "application/pdf",
+//     },
+//   ];
 
-  if (logoBuffer) {
-    attachments.push({
-      filename: "logo.jpeg",
-      content: logoBuffer,
-      contentType: "image/jpeg",
-    });
-  }
+//   if (logoBuffer) {
+//     attachments.push({
+//       filename: "logo.jpeg",
+//       content: logoBuffer,
+//       contentType: "image/jpeg",
+//     });
+//   }
 
-  // إرسال الإيميل
-  await sendEmail(
-    req.user.email,
-    "Order Confirmation",
-    "Your order has been succeeded",
-    attachments
-  );
+//   // إرسال الإيميل
+//   await sendEmail(
+//     req.user.email,
+//     "Order Confirmation",
+//     "Your order has been succeeded",
+//     attachments
+//   );
 
-  res.status(200).json({ success: true, message: "Invoice sent" });
-});
+//   res.status(200).json({ success: true, message: "Invoice sent" });
+// });
