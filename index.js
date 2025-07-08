@@ -50,9 +50,6 @@ app.get(
 );
 
 
- 
- 
-
 app.use('/api', apiLimiter);
 app.use(securityHeaders);
 

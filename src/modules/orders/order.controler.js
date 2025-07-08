@@ -12,6 +12,57 @@ import path from "path";
  import fs from "fs";
 
 
+export async function sendInvoiceEmail(order, user) {
+  const invoice = {
+    shipping: {
+      name: user.name,
+      address: order.address,
+      city: "Cairo",
+      state: "Cairo",
+      country: "Egypt",
+      postal_code: 94111,
+    },
+    items: order.foods.map((item) => ({
+      title: item.title,
+      price: item.price,
+      quantity: item.quantity,
+      finalprice: item.finalPrice,
+    })),
+    subtotal: order.subPrice,
+    paid: order.totalPrice,
+    invoice_nr: order._id,
+    Date: order.createdAt,
+    coupon: order.coupon || 0,
+  };
+
+  const pdfBuffer = await createInvoice(invoice);
+  const logoPath = path.join(process.cwd(), "public", "download.jpeg");
+  const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
+
+  const attachments = [
+    {
+      filename: "invoice.pdf",
+      content: pdfBuffer,
+      contentType: "application/pdf",
+    },
+  ];
+
+  if (logoBuffer) {
+    attachments.push({
+      filename: "logo.jpeg",
+      content: logoBuffer,
+      contentType: "image/jpeg",
+    });
+  }
+
+  await sendEmail(
+    user.email,
+    "Order Confirmation",
+    "Your order has been succeeded",
+    attachments
+  );
+}
+
 export const createOrder = asyncHandeler(async (req, res, next) => {
   const { paymentmethod, phone, address } = req.body;
 
@@ -265,32 +316,69 @@ export const getStatusOrder = asyncHandeler(async (req, res, next) => {
   res.status(200).json({ status: order.status });
 });
 
-export const webkook = async (req, res, next) => {
+// export const webkook = async (req, res, next) => {
+//   const stripe = new Stripe(process.env.stripe_secret);
+//   const sig = req.headers['stripe-signature'];
+
+//   let event;
+
+//   try {
+//     event = stripe.webhooks.constructEvent(req.body, sig, process.env.endpointSecret);
+//   } catch (err) {
+//     return res.status(400).send(`Webhook Error: ${err.message}`);
+//   }
+
+//   const { orderId } = event.data.object.metadata;
+
+//   if (event.type !== "checkout.session.completed") {
+//     await orderModel.findOneAndUpdate({ _id: orderId }, { status: "rejected" });
+//     return res.status(400).json("fail");
+//   }
+
+//   await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" });
+  
+  
+//   return res.status(200).json("done");
+// };
+
+
+export const webkook = async (req, res) => {
   const stripe = new Stripe(process.env.stripe_secret);
-  const sig = req.headers['stripe-signature'];
+  const sig = req.headers["stripe-signature"];
 
   let event;
-
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.endpointSecret);
   } catch (err) {
+    console.error("❌ Signature Error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  const { orderId } = event.data.object.metadata;
-
   if (event.type !== "checkout.session.completed") {
-    await orderModel.findOneAndUpdate({ _id: orderId }, { status: "rejected" });
-    return res.status(400).json("fail");
+    return res.status(400).json("Not a completed payment");
   }
 
-  await orderModel.findOneAndUpdate({ _id: orderId }, { status: "placed" });
-  
-  
-  return res.status(200).json("done");
+  const session = event.data.object;
+  const orderId = session.metadata.orderId;
+
+  // ✅ تحديث حالة الأوردر
+  const order = await orderModel.findByIdAndUpdate(orderId, { status: "placed" }, { new: true });
+  if (!order) return res.status(404).json({ error: "Order not found" });
+
+  // ✅ جلب بيانات المستخدم
+  const user = await userModel.findById(order.user);
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  // ✅ إرسال الإيميل بالفاتورة
+  try {
+    await sendInvoiceEmail(order, user); // 📨
+  } catch (emailErr) {
+    console.error("❌ Email error:", emailErr.message);
+    // نكمل trotzdem
+  }
+
+  return res.status(200).json({ message: "Webhook handled and email sent" });
 };
-
-
 
 
 export const getOrders = asyncHandeler(async (req, res, next) => {
@@ -366,64 +454,6 @@ export const getOrders = asyncHandeler(async (req, res, next) => {
   });
 });
 
+ 
 
-// route: POST /api/orders/send-invoice/:id
-
-export const sendInvoiceAfterPayment = asyncHandeler(async (req, res, next) => {
-  const order = await orderModel.findById(req.params.id).populate("user", "email name");
-
-  if (!order) return next(new AppError("Order not found", 404));
-  if (order.status !== "placed") return next(new AppError("Payment not confirmed", 400));
-
-  const invoice = {
-    shipping: {
-      name: order.user.name,
-      address: order.address,
-      city: "Cairo",
-      state: "Cairo",
-      country: "Egypt",
-      postal_code: 94111,
-    },
-    items: order.foods.map((item) => ({
-      title: item.title,
-      price: item.price,
-      quantity: item.quantity,
-      finalprice: item.finalPrice,
-    })),
-    subtotal: order.subPrice,
-    paid: order.totalPrice,
-    invoice_nr: order._id,
-    Date: order.createdAt,
-    coupon: order.coupon || 0,
-  };
-
-  const pdfBuffer = await createInvoice(invoice);
-
-  const logoPath = path.join(process.cwd(), "public", "download.jpeg");
-  const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
-
-  const attachments = [
-    {
-      filename: "invoice.pdf",
-      content: pdfBuffer,
-      contentType: "application/pdf",
-    },
-  ];
-
-  if (logoBuffer) {
-    attachments.push({
-      filename: "logo.jpeg",
-      content: logoBuffer,
-      contentType: "image/jpeg",
-    });
-  }
-
-  await sendEmail(
-    order.user.email,
-    "Order Confirmation",
-    "Your order has been succeeded",
-    attachments
-  );
-
-  res.status(200).json({ success: true, message: "Invoice sent" });
-});
+ 
