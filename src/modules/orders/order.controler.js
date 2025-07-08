@@ -156,51 +156,6 @@ export const createOrder = asyncHandeler(async (req, res, next) => {
 
     return res.status(201).json({ msg: "added", url: session.url });
   }
-//   const invoice = {
-//   shipping: {
-//     name: req.user.name,
-//     address: order.address,
-//     city: "Cairo",
-//     state: "Cairo",
-//     country: "Egypt",
-//     postal_code: 94111,
-//   },
-//   items: order.foods.map((item) => ({
-//     title: item.title,
-//     price: item.price,
-//     quantity: item.quantity,
-//     finalprice: item.finalPrice,
-//   })),
-//   subtotal: order.subPrice,
-//   paid: order.totalPrice,
-//   invoice_nr: order._id,
-//   Date: order.createdAt,
-//   coupon: order.coupon || 0,  
-// };
-
- 
-//   const pdfBuffer = await createInvoice(invoice);
-
-//   const logoPath = path.join(process.cwd(), "public", "download.jpeg");
-//   const logoBuffer = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
-
-//   const attachments = [
-//     {
-//       filename: "invoice.pdf",
-//       content: pdfBuffer,
-//       contentType: "application/pdf",
-//     },
-//   ];
-
-//   if (logoBuffer) {
-//     attachments.push({
-//       filename: "logo.jpeg",
-//       content: logoBuffer,
-//       contentType: "image/jpeg",
-//     });
-//   }
-
-//   await sendEmail(req.user.email, "Order Confirmation", "Your order has been succeeded", attachments);
  
 await sendInvoiceEmail(order, req.user);
 
@@ -344,42 +299,58 @@ export const getStatusOrder = asyncHandeler(async (req, res, next) => {
 // };
 
 
-export const webkook = async (req, res) => {
+export const webhook = async (req, res) => {
   const stripe = new Stripe(process.env.stripe_secret);
   const sig = req.headers["stripe-signature"];
-
   let event;
+
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.endpointSecret);
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.endpointSecret
+    );
   } catch (err) {
-    console.error("❌ Signature Error:", err.message);
+    console.error("❌ Webhook signature error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  const { orderId } = event.data.object.metadata;
+
+  if (!orderId) {
+    console.error("❌ Missing orderId in metadata");
+    return res.status(400).json({ error: "Missing orderId" });
+  }
+
   if (event.type !== "checkout.session.completed") {
-    return res.status(400).json("Not a completed payment");
+    await orderModel.findByIdAndUpdate(orderId, { status: "rejected" });
+    return res.status(400).json("fail");
   }
 
-  const session = event.data.object;
-  const orderId = session.metadata.orderId;
+  const order = await orderModel
+    .findByIdAndUpdate(orderId, { status: "placed" }, { new: true })
+    .populate("user", "name email");
 
-  // ✅ تحديث حالة الأوردر
-  const order = await orderModel.findByIdAndUpdate(orderId, { status: "placed" }, { new: true });
-  if (!order) return res.status(404).json({ error: "Order not found" });
+  if (!order) {
+    console.error("❌ Order not found");
+    return res.status(404).json({ error: "Order not found" });
+  }
 
-  // ✅ جلب بيانات المستخدم
-  const user = await userModel.findById(order.user);
-  if (!user) return res.status(404).json({ error: "User not found" });
+  if (!order.user || !order.user.email) {
+    console.error("❌ User not populated or missing email:", order.user);
+    return res.status(400).json({ error: "User not found or missing email" });
+  }
 
-  // ✅ إرسال الإيميل بالفاتورة
+  console.log("✅ Order placed and user populated:", order.user);
+
   try {
-    await sendInvoiceEmail(order, user); // 📨
+    await sendInvoiceEmail(order, order.user);
+    console.log("✅ Email sent successfully");
   } catch (emailErr) {
-    console.error("❌ Email error:", emailErr.message);
-    // نكمل trotzdem
+    console.error("❌ Failed to send invoice email:", emailErr.message);
   }
 
-  return res.status(200).json({ message: "Webhook handled and email sent" });
+  return res.status(200).json("done");
 };
 
 
